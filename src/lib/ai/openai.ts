@@ -32,7 +32,7 @@ export function openaiProvider(): AiProvider {
               role: "system",
               content:
                 ENRICH_SYSTEM_PROMPT +
-                '\nAntworte als JSON Objekt mit den Feldern name (String), beschreibung (String), attribute (Objekt Schlüssel zu Wert, beide String) und hinweis (String).',
+                '\nAntworte als JSON Objekt mit den Feldern name (String), beschreibung (String), attribute (Objekt Schlüssel zu Wert, beide String), bulletpoints (Array aus Strings), qa (Array aus Objekten mit frage und antwort) und hinweis (String).',
             },
             { role: "user", content: enrichUserPrompt(input) },
           ],
@@ -52,7 +52,18 @@ export function openaiProvider(): AiProvider {
                 Object.entries(parsed.attribute).map(([k, v]) => [k, String(v)])
               )
             : {},
-        hinweis: String(parsed.hinweis ?? ""),
+        bulletpoints: Array.isArray(parsed.bulletpoints)
+          ? parsed.bulletpoints.map(String)
+          : [],
+        qa: Array.isArray(parsed.qa)
+          ? parsed.qa.map((p: { frage?: unknown; antwort?: unknown }) => ({
+              frage: String(p?.frage ?? ""),
+              antwort: String(p?.antwort ?? ""),
+            }))
+          : [],
+        hinweis:
+          (input.recherche ? "Webrecherche ist derzeit nur mit dem Anbieter Claude verfügbar. " : "") +
+          String(parsed.hinweis ?? ""),
       };
     },
   };

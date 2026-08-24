@@ -58,6 +58,7 @@ export async function POST(request: Request) {
       katalogKeys: Array.isArray(body.katalogKeys)
         ? body.katalogKeys.filter((k: unknown) => typeof k === "string")
         : [],
+      recherche: body.recherche === true,
     };
   } catch {
     return NextResponse.json(
