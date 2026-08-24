@@ -19,7 +19,11 @@ async function verifyUser(token: string): Promise<boolean> {
 export async function POST(request: Request) {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  if (!token || !(await verifyUser(token))) {
+  // Testzugang nur im lokalen Dev Server, in Produktion wirkungslos.
+  const devBypass =
+    process.env.NODE_ENV !== "production" &&
+    process.env.ENRICH_DEV_BYPASS === "1";
+  if (!devBypass && (!token || !(await verifyUser(token)))) {
     return NextResponse.json(
       { fehler: "Nicht angemeldet." },
       { status: 401 }
