@@ -1,0 +1,182 @@
+@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
+@import "tailwindcss";
+
+/* ── Datalio design tokens ─────────────────────────────
+   Quelle: Datalio Design Theme / tokens. Ink auf Ground,
+   Paper für Flächen, ein Akzent (Signal), Steel als warme
+   Grau-Rampe. Radius 0, keine Schatten, keine Verläufe. */
+@theme {
+  --color-ink: #16181a;
+  --color-ground: #f4f3f0;
+  --color-paper: #ffffff;
+
+  --color-signal: #e23a16;
+  --color-signal-strong: #b02a0e;
+  --color-signal-deep: #7e1e09;
+  --color-signal-tint: #fbe4de;
+
+  --color-steel-100: #f7f6f4;
+  --color-steel-200: #edebe7;
+  --color-steel-300: #dad8d2;
+  --color-steel-400: #b7b4ac;
+  --color-steel-500: #939087;
+  --color-steel-600: #706d65;
+  --color-steel-700: #524f49;
+  --color-steel-800: #35332f;
+  --color-steel-900: #1d1c1a;
+
+  --color-success: #2f6b3a;
+  --color-warning: #9a6a10;
+
+  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --radius: 0px;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-ground text-ink font-sans antialiased;
+}
+
+::selection {
+  background: var(--color-signal-tint);
+}
+
+/* Label style: uppercase 11px, +0.14em tracking */
+.dl-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+/* Display headlines: tight leading, negative tracking, flush left */
+.dl-display {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.0;
+}
+
+/* Modular grid: cells separated by 2px ink, not by air */
+.dl-grid {
+  display: grid;
+  gap: 2px;
+  background: var(--color-ink);
+  border: 2px solid var(--color-ink);
+}
+.dl-grid > * {
+  background: var(--color-paper);
+}
+
+.dl-rule {
+  border-top: 2px solid var(--color-ink);
+}
+
+/* Marquee (Magic-UI-Muster, an das Theme angepasst: linear, flach) */
+@keyframes dl-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(-100% - var(--marquee-gap, 2px)));
+  }
+}
+.dl-marquee-track {
+  animation: dl-marquee var(--marquee-duration, 40s) linear infinite;
+}
+.dl-marquee:hover .dl-marquee-track {
+  animation-play-state: paused;
+}
+
+/* Focus: 2px signal outline at 2px offset */
+:focus-visible {
+  outline: 2px solid var(--color-signal);
+  outline-offset: 2px;
+}
+
+/* Ratgeber-Artikel: Typografie für lange Texte */
+.guide h2 {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-size: 26px;
+  line-height: 1.15;
+  margin-top: 48px;
+}
+.guide h2:first-child {
+  margin-top: 0;
+}
+.guide h3 {
+  font-weight: 700;
+  font-size: 18px;
+  margin-top: 32px;
+}
+.guide p {
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--color-steel-700);
+  margin-top: 16px;
+  max-width: 68ch;
+}
+.guide ul {
+  margin-top: 16px;
+  max-width: 68ch;
+}
+.guide ul li {
+  position: relative;
+  padding-left: 20px;
+  font-size: 16px;
+  line-height: 1.65;
+  color: var(--color-steel-700);
+  margin-top: 8px;
+}
+.guide ul li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 9px;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--color-signal);
+  border-radius: 999px;
+}
+.guide strong {
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.guide .guide-table {
+  margin-top: 24px;
+  overflow-x: auto;
+}
+.guide table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 2px solid var(--color-ink);
+  font-size: 14px;
+}
+.guide th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  padding: 10px 14px;
+  background: var(--color-steel-200);
+  border-bottom: 2px solid var(--color-ink);
+}
+.guide td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--color-steel-300);
+  vertical-align: top;
+  line-height: 1.5;
+}
+.guide a {
+  color: var(--color-signal-strong);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
