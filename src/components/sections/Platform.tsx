@@ -87,26 +87,46 @@ function KiAnreicherung() {
   );
 }
 
+function KanalLogo({ logo }: { logo: { img?: string; text?: string } }) {
+  return (
+    <span className="flex h-9 w-14 shrink-0 items-center justify-center border border-steel-300 bg-white px-1.5">
+      {logo.img ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logo.img}
+          alt=""
+          className="max-h-5 w-auto max-w-full opacity-80 grayscale"
+        />
+      ) : (
+        <span className="text-[13px] font-bold tracking-tight text-steel-700">
+          {logo.text}
+        </span>
+      )}
+    </span>
+  );
+}
+
 function Kanaele() {
   const channels = [
-    { name: "JTL Wawi", state: "Synchron", time: "vor 4 min" },
-    { name: "JTL Shop", state: "Synchron", time: "vor 6 min" },
-    { name: "Amazon Feed", state: "Aktiv", time: "vor 12 min" },
-    { name: "idealo Feed", state: "Aktiv", time: "vor 18 min" },
-    { name: "eBay", state: "Aktiv", time: "vor 31 min" },
-    { name: "Google Shopping", state: "Täglich 06:00", time: "planmäßig" },
+    { name: "JTL Wawi", state: "Synchron", time: "vor 4 min", logo: { text: "JTL" } },
+    { name: "JTL Shop", state: "Synchron", time: "vor 6 min", logo: { text: "JTL" } },
+    { name: "Amazon Feed", state: "Aktiv", time: "vor 12 min", logo: { img: "/logos/amazon.svg" } },
+    { name: "idealo Feed", state: "Aktiv", time: "vor 18 min", logo: { img: "/logos/idealo.svg" } },
+    { name: "eBay", state: "Aktiv", time: "vor 31 min", logo: { img: "/logos/ebay.svg" } },
+    { name: "Google Shopping", state: "Täglich 06:00", time: "planmäßig", logo: { img: "/logos/google.svg" } },
   ];
   return (
     <div className="dl-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       {channels.map((c) => (
         <div key={c.name} className="flex items-center gap-3 px-4 py-4">
-          <Check size={16} strokeWidth={2.5} className="shrink-0 text-success" />
-          <div>
-            <p className="text-[14px] font-bold">{c.name}</p>
+          <KanalLogo logo={c.logo} />
+          <div className="min-w-0">
+            <p className="truncate text-[14px] font-bold">{c.name}</p>
             <p className="font-mono text-[11px] text-steel-500">
               {c.state} · {c.time}
             </p>
           </div>
+          <Check size={16} strokeWidth={2.5} className="ml-auto shrink-0 text-success" />
         </div>
       ))}
     </div>
