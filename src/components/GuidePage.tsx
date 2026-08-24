@@ -23,7 +23,12 @@ export function GuidePage({
         <div className="border-b-2 border-ink bg-paper">
           <div className="mx-auto max-w-[860px] px-5 py-16 md:px-10 md:py-20">
             <p className="dl-label text-signal-strong">{label}</p>
-            <h1 className="dl-display mt-4 text-[34px] md:text-[50px]">{title}</h1>
+            <h1
+              className="dl-display mt-4 text-[34px] break-words md:text-[50px]"
+              style={{ hyphens: "auto" }}
+            >
+              {title}
+            </h1>
             <p className="mt-6 max-w-[62ch] text-[17px] leading-[1.6] text-steel-700">
               {intro}
             </p>

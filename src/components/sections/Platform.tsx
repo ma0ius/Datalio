@@ -129,7 +129,7 @@ export function Platform() {
           </p>
         </Reveal>
         <Reveal delay={0.1}>
-          <div className="mt-10 flex border-b-2 border-ink">
+          <div className="mt-10 flex overflow-x-auto border-b-2 border-ink">
             {tabs.map((t) => (
               <button
                 key={t.id}

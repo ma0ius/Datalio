@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Inbox, LogOut, Upload, X } from "lucide-react";
+import { Download, Inbox, LogOut, Sparkles, Upload, X } from "lucide-react";
 import { getSupabase } from "../../lib/supabase";
 import { parseCsv, guessMapping, type ParsedCsv } from "../../lib/csv";
 import { Logo } from "../../components/ui/Logo";
@@ -13,6 +13,7 @@ type Artikel = {
   id: string;
   sku: string;
   name: string | null;
+  beschreibung: string | null;
   attribute: Record<string, string>;
   created_at: string;
 };
@@ -20,8 +21,8 @@ type Artikel = {
 type Feld = "sku" | "name" | "attribut" | "ignorieren";
 
 function Vollstaendigkeit({ artikel, alleKeys }: { artikel: Artikel; alleKeys: string[] }) {
-  const gesamt = alleKeys.length + 1;
-  let gefuellt = artikel.name?.trim() ? 1 : 0;
+  const gesamt = alleKeys.length + 2;
+  let gefuellt = (artikel.name?.trim() ? 1 : 0) + (artikel.beschreibung?.trim() ? 1 : 0);
   for (const k of alleKeys) {
     if ((artikel.attribute[k] ?? "").toString().trim() !== "") gefuellt++;
   }
@@ -38,6 +39,204 @@ function Vollstaendigkeit({ artikel, alleKeys }: { artikel: Artikel; alleKeys: s
   );
 }
 
+/* ── Artikeldetail: bearbeiten, mit KI anreichern, freigeben ── */
+function ArtikelDialog({
+  artikel,
+  alleKeys,
+  onClose,
+  onSaved,
+}: {
+  artikel: Artikel;
+  alleKeys: string[];
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const supabase = getSupabase()!;
+  const [name, setName] = useState(artikel.name ?? "");
+  const [beschreibung, setBeschreibung] = useState(artikel.beschreibung ?? "");
+  const [attribute, setAttribute] = useState<Record<string, string>>(() => {
+    const merged: Record<string, string> = {};
+    for (const k of alleKeys) merged[k] = artikel.attribute[k] ?? "";
+    for (const [k, v] of Object.entries(artikel.attribute)) merged[k] = v ?? "";
+    return merged;
+  });
+  const [kiHinweis, setKiHinweis] = useState<string | null>(null);
+  const [kiGefuellt, setKiGefuellt] = useState<Set<string>>(new Set());
+  const [busy, setBusy] = useState<"ki" | "speichern" | null>(null);
+  const [fehler, setFehler] = useState<string | null>(null);
+
+  async function anreichern() {
+    setBusy("ki");
+    setFehler(null);
+    setKiHinweis(null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Sitzung abgelaufen, bitte neu anmelden.");
+      const res = await fetch("/api/enrich", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          sku: artikel.sku,
+          name,
+          beschreibung,
+          attribute,
+          katalogKeys: Object.keys(attribute),
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.fehler ?? `Fehler ${res.status}`);
+      const gefuellt = new Set<string>();
+      if (json.name && json.name !== name) gefuellt.add("__name");
+      if (json.beschreibung && json.beschreibung !== beschreibung) gefuellt.add("__beschreibung");
+      setName(json.name || name);
+      setBeschreibung(json.beschreibung || beschreibung);
+      setAttribute((prev) => {
+        const next = { ...prev };
+        for (const [k, v] of Object.entries(json.attribute ?? {})) {
+          const wert = String(v ?? "");
+          if (wert.trim() !== "" && wert !== prev[k]) {
+            next[k] = wert;
+            gefuellt.add(k);
+          }
+        }
+        return next;
+      });
+      setKiGefuellt(gefuellt);
+      setKiHinweis(json.hinweis || "Anreicherung abgeschlossen.");
+    } catch (e) {
+      setFehler(e instanceof Error ? e.message : "Unbekannter Fehler.");
+    }
+    setBusy(null);
+  }
+
+  async function speichern() {
+    setBusy("speichern");
+    setFehler(null);
+    const { error } = await supabase
+      .from("artikel")
+      .update({
+        name: name.trim() || null,
+        beschreibung: beschreibung.trim() || null,
+        attribute,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", artikel.id);
+    setBusy(null);
+    if (error) {
+      setFehler(
+        error.message.includes("beschreibung")
+          ? "Die Spalte beschreibung fehlt noch. Bitte das Skript supabase/migrations/002_beschreibung.sql im Supabase SQL Editor ausführen."
+          : error.message
+      );
+      return;
+    }
+    onSaved();
+  }
+
+  const markiert = (key: string) =>
+    kiGefuellt.has(key) ? { background: "var(--color-signal-tint)" } : undefined;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/60 px-4 py-6">
+      <div
+        className="flex max-h-full w-full max-w-[760px] flex-col border-2 border-ink bg-paper"
+        style={{ boxShadow: "0 24px 48px rgba(22,24,26,0.22)" }}
+      >
+        <div className="flex items-center justify-between border-b-2 border-ink px-6 py-4">
+          <div>
+            <p className="font-mono text-[12px] text-steel-500">{artikel.sku}</p>
+            <h2 className="dl-display text-[20px]">Artikel bearbeiten</h2>
+          </div>
+          <button onClick={onClose} aria-label="Schließen">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          <div>
+            <label className="dl-label text-steel-600" htmlFor="a-name">Artikelname</label>
+            <input
+              id="a-name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              style={markiert("__name")}
+              className="mt-2 w-full border-2 border-ink bg-paper px-3 py-2.5 text-[14px]"
+            />
+          </div>
+          <div>
+            <label className="dl-label text-steel-600" htmlFor="a-beschreibung">
+              Beschreibung (SEO Text)
+            </label>
+            <textarea
+              id="a-beschreibung"
+              rows={5}
+              value={beschreibung}
+              onChange={(e) => setBeschreibung(e.target.value)}
+              style={markiert("__beschreibung")}
+              className="mt-2 w-full border-2 border-ink bg-paper px-3 py-2.5 text-[14px] leading-[1.55]"
+            />
+          </div>
+          <div>
+            <p className="dl-label text-steel-600">Attribute</p>
+            <div className="mt-2 border-2 border-ink">
+              {Object.keys(attribute).length === 0 && (
+                <p className="px-3 py-3 text-[13px] text-steel-500">
+                  Noch keine Attribute. Attribute entstehen beim CSV Import.
+                </p>
+              )}
+              {Object.keys(attribute).map((k) => (
+                <div
+                  key={k}
+                  className="grid grid-cols-1 gap-1 border-b border-steel-300 px-3 py-2 last:border-b-0 sm:grid-cols-[220px_1fr] sm:items-center sm:gap-3"
+                >
+                  <span className="truncate text-[13px] font-semibold">{k}</span>
+                  <input
+                    value={attribute[k]}
+                    onChange={(e) => setAttribute({ ...attribute, [k]: e.target.value })}
+                    style={markiert(k)}
+                    className="w-full border border-steel-300 bg-paper px-2 py-1.5 text-[13px]"
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+          {kiHinweis && (
+            <p className="border-2 border-ink bg-steel-100 px-3 py-2 text-[13px] leading-[1.5]">
+              <span className="dl-label mr-2 text-signal-strong">KI Hinweis</span>
+              {kiHinweis} Rot hinterlegte Felder sind KI Vorschläge — bitte prüfen, dann freigeben.
+            </p>
+          )}
+          {fehler && (
+            <p className="border-2 border-signal bg-signal-tint px-3 py-2 text-[13px] text-signal-deep">
+              {fehler}
+            </p>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink px-6 py-4">
+          <Button variant="outline" onClick={anreichern} disabled={busy !== null}>
+            <Sparkles size={14} strokeWidth={2.5} />
+            {busy === "ki" ? "KI arbeitet …" : "Mit KI anreichern"}
+          </Button>
+          <div className="flex gap-3">
+            <Button variant="ghost" onClick={onClose} disabled={busy !== null}>
+              Abbrechen
+            </Button>
+            <Button onClick={speichern} disabled={busy !== null}>
+              {busy === "speichern" ? "Speichert …" : "Freigeben und speichern"}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── CSV Import (Stufe 1) ── */
 function ImportDialog({
   onClose,
   onDone,
@@ -171,7 +370,7 @@ function ImportDialog({
               {csv.headers.map((h, i) => (
                 <div
                   key={i}
-                  className="grid grid-cols-[1fr_1fr_160px] items-center gap-3 border-b border-steel-300 px-3 py-2 last:border-b-0"
+                  className="grid grid-cols-1 gap-1.5 border-b border-steel-300 px-3 py-2 last:border-b-0 sm:grid-cols-[1fr_1fr_160px] sm:items-center sm:gap-3"
                 >
                   <span className="truncate text-[13px] font-semibold">{h}</span>
                   <span className="truncate font-mono text-[11px] text-steel-500">
@@ -197,7 +396,7 @@ function ImportDialog({
                 {fehler}
               </p>
             )}
-            <div className="mt-5 flex items-center justify-between">
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <button
                 onClick={() => setCsv(null)}
                 className="dl-label text-steel-600 hover:text-ink"
@@ -205,8 +404,7 @@ function ImportDialog({
                 Andere Datei wählen
               </button>
               <Button onClick={importieren} disabled={busy || !skuGewaehlt}>
-                {busy ? "Import läuft" : `${csv.rows.length.toLocaleString("de-DE")} Zeilen importieren`}{" "}
-                <ArrowRight size={14} strokeWidth={2.5} />
+                {busy ? "Import läuft" : `${csv.rows.length.toLocaleString("de-DE")} Zeilen importieren`}
               </Button>
             </div>
             {!skuGewaehlt && (
@@ -226,6 +424,28 @@ function ImportDialog({
   );
 }
 
+/* ── CSV Export: schließt die Kette Import → Anreichern → Publizieren ── */
+function exportCsv(artikel: Artikel[], alleKeys: string[]) {
+  const esc = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
+  const header = ["sku", "name", "beschreibung", ...alleKeys];
+  const zeilen = artikel.map((a) =>
+    [
+      esc(a.sku),
+      esc(a.name ?? ""),
+      esc(a.beschreibung ?? ""),
+      ...alleKeys.map((k) => esc(a.attribute[k] ?? "")),
+    ].join(";")
+  );
+  const csv = [header.map(esc).join(";"), ...zeilen].join("\r\n");
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "datalio-katalog.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function AppPage() {
   const router = useRouter();
   const supabase = getSupabase();
@@ -234,20 +454,23 @@ export default function AppPage() {
   const [artikel, setArtikel] = useState<Artikel[]>([]);
   const [ladeFehler, setLadeFehler] = useState<string | null>(null);
   const [importOffen, setImportOffen] = useState(false);
+  const [aktiverArtikel, setAktiverArtikel] = useState<Artikel | null>(null);
   const [meldung, setMeldung] = useState<string | null>(null);
 
   const laden = useCallback(async () => {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("artikel")
-      .select("id, sku, name, attribute, created_at")
+      .select("id, sku, name, beschreibung, attribute, created_at")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
       setLadeFehler(
         error.code === "42P01"
           ? "Die Datenbanktabelle fehlt noch. Bitte einmalig das Skript supabase/migrations/001_artikel.sql im Supabase SQL Editor ausführen (Anleitung im README)."
-          : error.message
+          : error.message.includes("beschreibung")
+            ? "Die Spalte beschreibung fehlt noch. Bitte einmalig das Skript supabase/migrations/002_beschreibung.sql im Supabase SQL Editor ausführen."
+            : error.message
       );
     } else {
       setLadeFehler(null);
@@ -313,9 +536,16 @@ export default function AppPage() {
             <h1 className="dl-display text-[30px]">Katalog</h1>
             <Tag tone="signal">Vorabversion</Tag>
           </div>
-          <Button onClick={() => setImportOffen(true)}>
-            <Upload size={14} strokeWidth={2.5} /> CSV importieren
-          </Button>
+          <div className="flex flex-wrap gap-3">
+            {artikel.length > 0 && (
+              <Button variant="outline" onClick={() => exportCsv(artikel, alleKeys)}>
+                <Download size={14} strokeWidth={2.5} /> CSV exportieren
+              </Button>
+            )}
+            <Button onClick={() => setImportOffen(true)}>
+              <Upload size={14} strokeWidth={2.5} /> CSV importieren
+            </Button>
+          </div>
         </div>
 
         {meldung && (
@@ -344,15 +574,16 @@ export default function AppPage() {
           </div>
         ) : artikel.length > 0 ? (
           <div className="mt-8 overflow-x-auto border-2 border-ink bg-paper">
-            <div className="grid min-w-[640px] grid-cols-[140px_1fr_160px_120px] gap-4 border-b-2 border-ink px-4 py-2.5">
-              {["SKU", "Artikel", "Vollständigkeit", "Attribute"].map((h) => (
+            <div className="grid min-w-[680px] grid-cols-[140px_1fr_150px_110px_90px] gap-4 border-b-2 border-ink px-4 py-2.5">
+              {["SKU", "Artikel", "Vollständigkeit", "Attribute", "SEO Text"].map((h) => (
                 <span key={h} className="dl-label text-steel-500">{h}</span>
               ))}
             </div>
             {artikel.map((a) => (
-              <div
+              <button
                 key={a.id}
-                className="grid min-w-[640px] grid-cols-[140px_1fr_160px_120px] items-center gap-4 border-b border-steel-300 px-4 py-3 last:border-b-0"
+                onClick={() => setAktiverArtikel(a)}
+                className="grid w-full min-w-[680px] grid-cols-[140px_1fr_150px_110px_90px] items-center gap-4 border-b border-steel-300 px-4 py-3 text-left transition-colors duration-150 last:border-b-0 hover:bg-steel-100"
               >
                 <span className="truncate font-mono text-[12px] text-steel-600">{a.sku}</span>
                 <span className="truncate text-[14px] font-semibold">
@@ -362,10 +593,15 @@ export default function AppPage() {
                 <span className="font-mono text-[12px] text-steel-600">
                   {Object.values(a.attribute ?? {}).filter((v) => (v ?? "").toString().trim() !== "").length} / {alleKeys.length}
                 </span>
-              </div>
+                {a.beschreibung?.trim() ? (
+                  <Tag tone="success">Vorhanden</Tag>
+                ) : (
+                  <Tag tone="neutral">Fehlt</Tag>
+                )}
+              </button>
             ))}
             <p className="px-4 py-3 font-mono text-[12px] text-steel-500">
-              {artikel.length.toLocaleString("de-DE")} Artikel · Vollständigkeit gemessen an allen bekannten Attributen
+              {artikel.length.toLocaleString("de-DE")} Artikel · Zum Bearbeiten und Anreichern Artikel anklicken
             </p>
           </div>
         ) : null}
@@ -377,6 +613,18 @@ export default function AppPage() {
           onDone={(anzahl) => {
             setImportOffen(false);
             setMeldung(`${anzahl.toLocaleString("de-DE")} Artikel importiert.`);
+            laden();
+          }}
+        />
+      )}
+      {aktiverArtikel && (
+        <ArtikelDialog
+          artikel={aktiverArtikel}
+          alleKeys={alleKeys}
+          onClose={() => setAktiverArtikel(null)}
+          onSaved={() => {
+            setAktiverArtikel(null);
+            setMeldung(`Artikel ${aktiverArtikel.sku} gespeichert.`);
             laden();
           }}
         />

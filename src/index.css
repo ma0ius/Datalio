@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import "tailwindcss" source("../src");
 
 /* ── Datalio design tokens ─────────────────────────────
    Quelle: Datalio Design Theme / tokens. Ink auf Ground,
@@ -120,6 +120,8 @@ body {
   color: var(--color-steel-700);
   margin-top: 16px;
   max-width: 68ch;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 .guide ul {
   margin-top: 16px;
