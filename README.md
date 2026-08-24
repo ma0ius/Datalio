@@ -22,12 +22,14 @@ npm run build   Produktivbuild
 1. `.env.local.example` nach `.env.local` kopieren
 2. Beide Werte aus Supabase eintragen (Projekt → Connect → Next.js App Router)
 3. Dieselben zwei Variablen im Vercel Projekt unter Settings → Environment Variables anlegen
+4. Einmalig die Datenbanktabelle anlegen: Inhalt von `supabase/migrations/001_artikel.sql` in den Supabase SQL Editor einfügen und ausführen
 
 Ohne diese Werte läuft die Website normal; nur `/login` und `/app` zeigen einen Hinweis.
 
 ## Struktur
 
-- `src/app/` — Seiten: Startseite, `ratgeber/*` (SEO Ratgeber), `impressum`, `datenschutz`, `login`, `app` (geschützter Bereich, Vorabversion)
+- `src/app/` — Seiten: Startseite, `ratgeber/*` (SEO Ratgeber), `impressum`, `datenschutz`, `login`, `app` (geschützter Bereich: CSV Import mit Spaltenzuordnung und Artikelliste)
+- `supabase/migrations/` — SQL Skripte für das Datenbankschema
 - `src/components/sections/` — Sektionen der Startseite
 - `src/components/ui/`, `src/components/fx/` — Basisbausteine und Animationen
 - `src/lib/supabase.ts` — Supabase Browser Client (mit Guard, falls Env fehlt)
