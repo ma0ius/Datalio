@@ -4,8 +4,8 @@ import { Reveal, RevealGroup, RevealItem } from "../fx/Reveal";
 
 /* Datenfluss: Quellen → Ring → Kanäle, mit laufenden Signal-Punkten */
 function FlowDiagram() {
-  const sources = ["ERP", "PLM", "Lieferantenliste", "Herstellerportal"];
-  const targets = ["Shop", "Marktplatz", "Katalog", "Datenfeed"];
+  const sources = ["Warenwirtschaft", "ERP", "Lieferantenliste", "Herstellerportal"];
+  const targets = ["Shop", "Marktplatz", "Preisportal", "Datenfeed"];
   const ys = [36, 96, 156, 216];
   return (
     <svg viewBox="0 0 900 252" className="w-full" role="img" aria-label="Datenfluss durch Datalio">
@@ -58,7 +58,7 @@ const steps = [
   {
     nr: "01",
     title: "Importieren",
-    text: "CSV, Excel, BMEcat oder direkte ERP Anbindung. Datalio liest, was Ihre Lieferanten liefern.",
+    text: "CSV, Excel, BMEcat oder direkte Anbindung an Wawi und ERP. Datalio liest, was Ihre Lieferanten und Hersteller liefern.",
   },
   {
     nr: "02",

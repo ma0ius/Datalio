@@ -17,7 +17,7 @@ const pains = [
   {
     icon: Clock,
     title: "Langsamer Marktstart",
-    text: "Neue Produkte stehen erst nach Wochen im Shop. Der Wettbewerb verkauft in dieser Zeit.",
+    text: "Neue Modelle stehen erst nach Wochen im Shop. Die Saison wartet nicht, der Wettbewerb verkauft schon.",
   },
   {
     icon: SearchX,

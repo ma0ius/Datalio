@@ -16,10 +16,10 @@ type TabId = (typeof tabs)[number]["id"];
 
 function Stammdaten() {
   const rows = [
-    { sku: "DL-4711-S", name: "Sicherungsmutter M12, verzinkt", quality: 100, status: "Freigegeben" },
-    { sku: "DL-4712-S", name: "Sechskantschraube M10×40, 8.8", quality: 96, status: "Freigegeben" },
-    { sku: "DL-5020-K", name: "Kabelverschraubung M20, IP68", quality: 74, status: "In Prüfung" },
-    { sku: "DL-5021-K", name: "Blindstopfen M20, PA6", quality: 41, status: "Unvollständig" },
+    { sku: "JB-1041-T", name: "Trekkingrad 28 Zoll, 24 Gang", quality: 100, status: "Freigegeben" },
+    { sku: "JB-1042-E", name: "E-Bike City, 500 Wh Mittelmotor", quality: 96, status: "Freigegeben" },
+    { sku: "JB-2050-Z", name: "Fahrradhelm mit MIPS, Größe M", quality: 74, status: "In Prüfung" },
+    { sku: "JB-2051-Z", name: "Kettenschloss, 110 Glieder", quality: 41, status: "Unvollständig" },
   ];
   return (
     <div className="dl-grid grid-cols-1">
@@ -60,23 +60,23 @@ function KiAnreicherung() {
   return (
     <div className="dl-grid grid-cols-1 lg:grid-cols-2">
       <div className="px-5 py-5">
-        <p className="dl-label text-steel-500">Eingang · Lieferantenliste</p>
+        <p className="dl-label text-steel-500">Eingang · Herstellerliste</p>
         <p className="mt-3 font-mono text-[12px] leading-[1.7] text-steel-600">
-          ART5020;Kabelverschr. M20;IP68;PA;grau;<br />
-          VE100;EAN 4012345678901;;;;
+          ART1042;E-Bike City 28;500Wh;Mittelm.;schwarz;<br />
+          VE1;EAN 4012345678901;;;;
         </p>
-        <Tag tone="warning" className="mt-4">4 von 12 Attributen belegt</Tag>
+        <Tag tone="warning" className="mt-4">4 von 14 Attributen belegt</Tag>
       </div>
       <div className="px-5 py-5">
         <p className="dl-label text-steel-500">Ausgang · Datalio Datensatz</p>
-        <p className="mt-3 text-[14px] font-bold">Kabelverschraubung M20, IP68, Polyamid</p>
+        <p className="mt-3 text-[14px] font-bold">E-Bike City 28 Zoll, 500 Wh Mittelmotor</p>
         <ul className="mt-2 space-y-1 font-mono text-[12px] text-steel-700">
-          <li>Gewinde: M20×1,5 · Klemmbereich: 6–12 mm</li>
-          <li>Schutzart: IP68 · Material: PA6, grau (RAL 7001)</li>
-          <li>SEO Text: 148 Wörter · Übersetzt: DE, EN, FR, IT</li>
+          <li>Motor: 65 Nm · Akku: 500 Wh, entnehmbar</li>
+          <li>Rahmenhöhen: 45, 50, 55 cm · Gewicht: 24 kg</li>
+          <li>SEO Text: 152 Wörter · Übersetzt: DE, EN, NL</li>
         </ul>
         <div className="mt-4 flex flex-wrap gap-2">
-          <Tag tone="success">12 von 12 Attributen belegt</Tag>
+          <Tag tone="success">14 von 14 Attributen belegt</Tag>
           <Tag tone="neutral">Freigabe ausstehend</Tag>
         </div>
       </div>
@@ -89,12 +89,12 @@ function KiAnreicherung() {
 
 function Kanaele() {
   const channels = [
-    { name: "Shopware 6", state: "Synchron", time: "vor 4 min" },
+    { name: "JTL Wawi", state: "Synchron", time: "vor 4 min" },
+    { name: "JTL Shop", state: "Synchron", time: "vor 6 min" },
     { name: "Amazon Feed", state: "Aktiv", time: "vor 12 min" },
-    { name: "JTL Wawi", state: "Synchron", time: "vor 18 min" },
-    { name: "OTTO Market", state: "Aktiv", time: "vor 31 min" },
-    { name: "Katalog PDF", state: "Erstellt", time: "gestern" },
-    { name: "Händlerfeed CSV", state: "Täglich 06:00", time: "planmäßig" },
+    { name: "idealo Feed", state: "Aktiv", time: "vor 18 min" },
+    { name: "eBay", state: "Aktiv", time: "vor 31 min" },
+    { name: "Google Shopping", state: "Täglich 06:00", time: "planmäßig" },
   ];
   return (
     <div className="dl-grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">

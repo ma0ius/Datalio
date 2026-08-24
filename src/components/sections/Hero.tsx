@@ -64,10 +64,10 @@ export function Hero() {
             {...fade(0.16)}
             className="mt-6 max-w-[52ch] text-[17px] leading-[1.6] text-steel-700"
           >
-            Datalio führt Artikeldaten aus ERP, PLM und Lieferantenlisten
-            zusammen, reichert sie mit KI an und publiziert sie in Shop,
-            Marktplatz und Katalog. Aus Lieferantendaten werden verkaufsfertige
-            Produktseiten. In Minuten, nicht in Wochen.
+            Datalio führt Artikeldaten aus Warenwirtschaft, ERP und
+            Lieferantenlisten zusammen, reichert sie mit KI an und publiziert
+            sie in Shop, Marktplatz und Preisportal. Aus Herstellerdaten
+            werden verkaufsfertige Produktseiten. In Minuten, nicht in Wochen.
           </motion.p>
           <motion.div {...fade(0.24)} className="mt-8 flex flex-wrap gap-3">
             <ButtonLink href="#demo">
@@ -132,9 +132,9 @@ export function Hero() {
               </div>
             </div>
             {[
-              { name: "Shopware", state: "Synchron" },
+              { name: "JTL Shop", state: "Synchron" },
               { name: "Amazon", state: "Feed aktiv" },
-              { name: "Katalog PDF", state: "Erstellt" },
+              { name: "idealo", state: "Feed aktiv" },
             ].map((c) => (
               <div key={c.name} className="flex items-center gap-2 px-4 py-3">
                 <Check size={16} strokeWidth={2.5} className="text-success" />

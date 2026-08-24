@@ -50,7 +50,7 @@ export function LlmSeo() {
           >
             <p className="dl-label mb-1 text-steel-500">Nutzerfrage</p>
             <p className="text-[14px] leading-[1.5]">
-              Welcher Akkuschrauber unter 200 € ist für den Werkstatteinsatz
+              Welches E-Bike unter 2.500 € ist für den täglichen Arbeitsweg
               geeignet?
             </p>
           </motion.div>
@@ -60,12 +60,12 @@ export function LlmSeo() {
           >
             <p className="dl-label mb-2 text-steel-500">Antwort der KI</p>
             <p className="text-[14px] font-bold">
-              Empfehlung: Atlas Pro 18V Compact
+              Empfehlung: Atlas City E 500
             </p>
             <ul className="mt-2 space-y-1 font-mono text-[12px] text-steel-700">
-              <li>Drehmoment: 75 Nm · Akku: 5,0 Ah</li>
-              <li>Schutzart: IP54 · Gewicht: 1,2 kg</li>
-              <li>CE konform · 3 Jahre Garantie</li>
+              <li>Mittelmotor: 65 Nm · Akku: 500 Wh, entnehmbar</li>
+              <li>Reichweite: bis 100 km · Gewicht: 24 kg</li>
+              <li>Beleuchtung nach StVZO · 2 Jahre Garantie</li>
             </ul>
             <div className="mt-3 border-t border-steel-300 pt-2">
               <Tag tone="signal">Quelle: strukturierte Produktdaten</Tag>

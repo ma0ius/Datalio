@@ -4,15 +4,15 @@ import { Reveal, RevealGroup, RevealItem } from "../fx/Reveal";
 const segments = [
   {
     nr: "01",
-    title: "Hersteller und Marken",
-    text: "Ein konsistenter Markenauftritt über alle Kanäle. Spezifikationen, Zertifikate und Marketingtexte zentral gepflegt, Compliance Unterlagen wie CE, REACH und GHS immer aktuell beim Handelspartner.",
-    points: ["Markenportal für Handelspartner", "Compliance Verwaltung", "Asset Distribution"],
+    title: "Händler und E-Commerce",
+    text: "Herstellerdaten werden zu verkaufsfertigen Produktseiten. SEO Texte, Attribute und Übersetzungen entstehen automatisch, die Freigabe bleibt bei Ihrem Team. Vom Markenrad bis zum Zubehör.",
+    points: ["SEO Texte in 40+ Sprachen", "JTL, Shopify, Amazon, idealo", "Conversion optimierte Inhalte"],
   },
   {
     nr: "02",
-    title: "Händler und E-Commerce",
-    text: "Lieferantendaten werden zu verkaufsfertigen Produktseiten. SEO Texte, Attribute und Übersetzungen entstehen automatisch, die Freigabe bleibt bei Ihrem Team.",
-    points: ["SEO Texte in 40+ Sprachen", "Shopware, Shopify, Amazon", "Conversion optimierte Inhalte"],
+    title: "Hersteller und Marken",
+    text: "Ein konsistenter Markenauftritt über alle Kanäle. Spezifikationen, Zertifikate und Marketingtexte zentral gepflegt, Compliance Unterlagen wie CE und StVZO Angaben immer aktuell beim Handelspartner.",
+    points: ["Markenportal für Handelspartner", "Compliance Verwaltung", "Asset Distribution"],
   },
   {
     nr: "03",
