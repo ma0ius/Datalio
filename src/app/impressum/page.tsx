@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-/* PLATZHALTER in eckigen Klammern vor Veröffentlichung füllen. */
 export default function Page() {
   return (
     <GuidePage
@@ -16,29 +15,18 @@ export default function Page() {
     >
       <h2>Anbieter</h2>
       <p>
-        [Vor- und Nachname bzw. Firma mit Rechtsform]
+        Marius Strauss
         <br />
-        [Straße und Hausnummer]
+        Rüppurrer Straße 26
         <br />
-        [PLZ] [Ort]
+        76137 Karlsruhe
         <br />
         Deutschland
       </p>
       <h2>Kontakt</h2>
-      <p>
-        E-Mail: kontakt@datalio.de
-        <br />
-        [Telefonnummer, optional aber empfohlen]
-      </p>
-      <h2>Umsatzsteuer</h2>
-      <p>
-        [Umsatzsteuer-Identifikationsnummer gemäß § 27a UStG: DE…, falls
-        vorhanden. Andernfalls diesen Abschnitt entfernen.]
-      </p>
+      <p>E-Mail: kontakt@datalio.de</p>
       <h2>Verantwortlich für redaktionelle Inhalte</h2>
-      <p>
-        Gemäß § 18 Abs. 2 MStV: [Vor- und Nachname], Anschrift wie oben.
-      </p>
+      <p>Gemäß § 18 Abs. 2 MStV: Marius Strauss, Anschrift wie oben.</p>
       <h2>Verbraucherstreitbeilegung</h2>
       <p>
         Das Angebot von Datalio richtet sich ausschließlich an Unternehmen.

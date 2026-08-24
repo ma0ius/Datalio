@@ -6,7 +6,6 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-/* PLATZHALTER in eckigen Klammern vor Veröffentlichung füllen. */
 export default function Page() {
   return (
     <GuidePage
@@ -16,8 +15,7 @@ export default function Page() {
     >
       <h2>1. Verantwortlicher</h2>
       <p>
-        [Vor- und Nachname bzw. Firma], [Straße und Hausnummer], [PLZ] [Ort],
-        Deutschland
+        Marius Strauss, Rüppurrer Straße 26, 76137 Karlsruhe, Deutschland
         <br />
         E-Mail: kontakt@datalio.de
       </p>
@@ -93,8 +91,9 @@ export default function Page() {
         Verarbeitung (Art. 18 DSGVO), Datenübertragbarkeit (Art. 20 DSGVO)
         und Widerspruch gegen Verarbeitungen auf Grundlage von Art. 6 Abs. 1
         lit. f DSGVO (Art. 21 DSGVO). Daneben besteht ein Beschwerderecht bei
-        einer Datenschutzaufsichtsbehörde, etwa der [zuständige
-        Landesdatenschutzbehörde des Bundeslands des Anbieters].
+        einer Datenschutzaufsichtsbehörde; zuständig für uns ist der
+        Landesbeauftragte für den Datenschutz und die Informationsfreiheit
+        Baden-Württemberg.
       </p>
 
       <h2>9. Stand</h2>

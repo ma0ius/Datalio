@@ -6,8 +6,7 @@ export const metadata: Metadata = {
   robots: { index: false },
 };
 
-/* PLATZHALTER in eckigen Klammern vor Veröffentlichung füllen.
-   Entwurf nach gängigem SaaS Muster, vor dem ersten zahlenden
+/* Entwurf nach gängigem SaaS Muster, vor dem ersten zahlenden
    Kunden anwaltlich prüfen lassen. */
 export default function Page() {
   return (
@@ -19,9 +18,9 @@ export default function Page() {
       <h2>§ 1 Geltungsbereich</h2>
       <p>
         Diese Allgemeinen Geschäftsbedingungen gelten für alle Verträge
-        zwischen [Vor- und Nachname bzw. Firma], [Anschrift] (nachfolgend
-        „Anbieter") und dem Kunden über die Nutzung der Softwareplattform
-        Datalio. Das Angebot richtet sich ausschließlich an Unternehmer im
+        zwischen Marius Strauss, Rüppurrer Straße 26, 76137 Karlsruhe
+        (nachfolgend „Anbieter") und dem Kunden über die Nutzung der
+        Softwareplattform Datalio. Das Angebot richtet sich ausschließlich an Unternehmer im
         Sinne des § 14 BGB, an juristische Personen des öffentlichen Rechts
         und an öffentlich-rechtliche Sondervermögen. Abweichende Bedingungen
         des Kunden finden keine Anwendung, es sei denn, der Anbieter stimmt
@@ -67,7 +66,7 @@ export default function Page() {
         kostenpflichtiger Vertrag entsteht erst durch ausdrückliche
         Beauftragung. Entgelte richten sich nach der bei Vertragsschluss
         vereinbarten Preisübersicht beziehungsweise dem individuellen
-        Angebot. Rechnungen sind [14] Tage nach Zugang ohne Abzug zahlbar.
+        Angebot. Rechnungen sind 14 Tage nach Zugang ohne Abzug zahlbar.
         Alle Preise verstehen sich zuzüglich gesetzlicher Umsatzsteuer.
       </p>
 
@@ -88,7 +87,7 @@ export default function Page() {
         Produktdaten bleiben Eigentum des Kunden. Der Anbieter nutzt sie
         ausschließlich zur Vertragserfüllung. Der Kunde kann seine Daten
         während der Vertragslaufzeit in gängigen Formaten exportieren. Nach
-        Vertragsende werden die Daten des Kunden innerhalb von [90] Tagen
+        Vertragsende werden die Daten des Kunden innerhalb von 90 Tagen
         gelöscht, soweit keine gesetzlichen Aufbewahrungspflichten bestehen.
         Soweit der Anbieter personenbezogene Daten im Auftrag des Kunden
         verarbeitet, schließen die Parteien auf Anforderung einen
@@ -124,7 +123,7 @@ export default function Page() {
       <h2>§ 10 Laufzeit und Kündigung</h2>
       <p>
         Der Vertrag läuft auf unbestimmte Zeit und kann von beiden Seiten
-        mit einer Frist von [einem Monat zum Monatsende] gekündigt werden,
+        mit einer Frist von einem Monat zum Monatsende gekündigt werden,
         soweit nicht individuell etwas anderes vereinbart ist. Das Recht zur
         außerordentlichen Kündigung aus wichtigem Grund bleibt unberührt.
         Kündigungen bedürfen der Textform.
@@ -135,7 +134,7 @@ export default function Page() {
         Der Anbieter kann diese Bedingungen mit Wirkung für die Zukunft
         ändern, soweit dies aus triftigen Gründen erforderlich ist und den
         Kunden nicht unangemessen benachteiligt. Änderungen werden dem
-        Kunden mindestens [sechs Wochen] vor Wirksamwerden in Textform
+        Kunden mindestens sechs Wochen vor Wirksamwerden in Textform
         mitgeteilt. Widerspricht der Kunde nicht innerhalb der Frist, gelten
         die Änderungen als angenommen; auf diese Folge wird in der
         Mitteilung gesondert hingewiesen.
@@ -145,7 +144,7 @@ export default function Page() {
       <p>
         Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss
         des UN Kaufrechts. Gerichtsstand für alle Streitigkeiten aus diesem
-        Vertrag ist [Sitz des Anbieters], soweit der Kunde Kaufmann,
+        Vertrag ist Karlsruhe, soweit der Kunde Kaufmann,
         juristische Person des öffentlichen Rechts oder
         öffentlich-rechtliches Sondervermögen ist. Sollten einzelne
         Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen
