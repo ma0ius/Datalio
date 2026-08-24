@@ -2,12 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Inbox, LogOut, Sparkles, Upload, X } from "lucide-react";
+import { CheckCheck, Download, Inbox, LogOut, Sparkles, Upload, X } from "lucide-react";
 import { getSupabase } from "../../lib/supabase";
-import { parseCsv, guessMapping, type ParsedCsv } from "../../lib/csv";
+import { parseCsv, guessMapping, umlautify, type ParsedCsv } from "../../lib/csv";
 import { Logo } from "../../components/ui/Logo";
 import { Tag } from "../../components/ui/Tag";
 import { Button } from "../../components/ui/Button";
+
+type Vorschlag = {
+  name: string;
+  beschreibung: string;
+  attribute: Record<string, string>;
+  hinweis: string;
+};
 
 type Artikel = {
   id: string;
@@ -15,10 +22,28 @@ type Artikel = {
   name: string | null;
   beschreibung: string | null;
   attribute: Record<string, string>;
+  vorschlag: Vorschlag | null;
+  status: string;
   created_at: string;
 };
 
 type Feld = "sku" | "name" | "attribut" | "ignorieren";
+
+const HILFE = {
+  sku: "Eindeutige Artikelnummer aus Ihrem Import. Gleiche SKU wird beim erneuten Import aktualisiert, nicht doppelt angelegt.",
+  artikel: "Artikelname. Die KI normalisiert Schreibweise und Vollständigkeit, ändert aber nie die Bedeutung.",
+  vollstaendigkeit: "Anteil der gefüllten Felder: Name, SEO Text und alle bekannten Attribute.",
+  attribute: "Gefüllte Attribute dieses Artikels im Verhältnis zu allen Attributspalten des Katalogs.",
+  status: "Neu = importiert. Vorschlag = die KI hat Vorschläge erstellt, die auf Ihre Freigabe warten. Freigegeben = von Ihnen geprüft.",
+  beschreibung: "Von der KI erstellter Produkttext für Shop und Marktplatz. Wird erst nach Ihrer Freigabe Teil des Datensatzes.",
+  attributHerkunft: "Attributspalte aus Ihrem CSV Import.",
+};
+
+function statusTag(a: Artikel) {
+  if (a.vorschlag) return <Tag tone="warning">Vorschlag</Tag>;
+  if (a.status === "freigegeben") return <Tag tone="success">Freigegeben</Tag>;
+  return <Tag tone="neutral">Neu</Tag>;
+}
 
 function Vollstaendigkeit({ artikel, alleKeys }: { artikel: Artikel; alleKeys: string[] }) {
   const gesamt = alleKeys.length + 2;
@@ -30,7 +55,7 @@ function Vollstaendigkeit({ artikel, alleKeys }: { artikel: Artikel; alleKeys: s
   const color =
     pct >= 90 ? "var(--color-ink)" : pct >= 60 ? "var(--color-steel-400)" : "var(--color-signal)";
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={HILFE.vollstaendigkeit}>
       <div className="h-2 w-16 bg-steel-200">
         <div className="h-full" style={{ width: `${pct}%`, background: color }} />
       </div>
@@ -39,7 +64,22 @@ function Vollstaendigkeit({ artikel, alleKeys }: { artikel: Artikel; alleKeys: s
   );
 }
 
-/* ── Artikeldetail: bearbeiten, mit KI anreichern, freigeben ── */
+/* Vorschlag anwenden: KI Werte füllen nur Lücken oder ersetzen nach Prüfung. */
+function vorschlagAnwenden(a: Artikel): { name: string | null; beschreibung: string | null; attribute: Record<string, string> } {
+  const v = a.vorschlag;
+  if (!v) return { name: a.name, beschreibung: a.beschreibung, attribute: a.attribute };
+  const attribute = { ...a.attribute };
+  for (const [k, wert] of Object.entries(v.attribute ?? {})) {
+    if ((wert ?? "").trim() !== "") attribute[k] = wert;
+  }
+  return {
+    name: v.name?.trim() ? v.name : a.name,
+    beschreibung: v.beschreibung?.trim() ? v.beschreibung : a.beschreibung,
+    attribute,
+  };
+}
+
+/* ── Artikeldetail: prüfen, nachbearbeiten, freigeben ── */
 function ArtikelDialog({
   artikel,
   alleKeys,
@@ -52,23 +92,34 @@ function ArtikelDialog({
   onSaved: () => void;
 }) {
   const supabase = getSupabase()!;
-  const [name, setName] = useState(artikel.name ?? "");
-  const [beschreibung, setBeschreibung] = useState(artikel.beschreibung ?? "");
+  const angewendet = vorschlagAnwenden(artikel);
+  const [name, setName] = useState(angewendet.name ?? "");
+  const [beschreibung, setBeschreibung] = useState(angewendet.beschreibung ?? "");
   const [attribute, setAttribute] = useState<Record<string, string>>(() => {
     const merged: Record<string, string> = {};
-    for (const k of alleKeys) merged[k] = artikel.attribute[k] ?? "";
-    for (const [k, v] of Object.entries(artikel.attribute)) merged[k] = v ?? "";
+    for (const k of alleKeys) merged[k] = angewendet.attribute[k] ?? "";
+    for (const [k, v] of Object.entries(angewendet.attribute)) merged[k] = v ?? "";
     return merged;
   });
-  const [kiHinweis, setKiHinweis] = useState<string | null>(null);
-  const [kiGefuellt, setKiGefuellt] = useState<Set<string>>(new Set());
+  const [kiHinweis, setKiHinweis] = useState<string | null>(artikel.vorschlag?.hinweis ?? null);
+  const [kiGefuellt, setKiGefuellt] = useState<Set<string>>(() => {
+    const s = new Set<string>();
+    const v = artikel.vorschlag;
+    if (v) {
+      if (v.name?.trim() && v.name !== artikel.name) s.add("__name");
+      if (v.beschreibung?.trim() && v.beschreibung !== artikel.beschreibung) s.add("__beschreibung");
+      for (const [k, wert] of Object.entries(v.attribute ?? {})) {
+        if ((wert ?? "").trim() !== "" && wert !== artikel.attribute[k]) s.add(k);
+      }
+    }
+    return s;
+  });
   const [busy, setBusy] = useState<"ki" | "speichern" | null>(null);
   const [fehler, setFehler] = useState<string | null>(null);
 
   async function anreichern() {
     setBusy("ki");
     setFehler(null);
-    setKiHinweis(null);
     try {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -122,14 +173,16 @@ function ArtikelDialog({
         name: name.trim() || null,
         beschreibung: beschreibung.trim() || null,
         attribute,
+        vorschlag: null,
+        status: "freigegeben",
         updated_at: new Date().toISOString(),
       })
       .eq("id", artikel.id);
     setBusy(null);
     if (error) {
       setFehler(
-        error.message.includes("beschreibung")
-          ? "Die Spalte beschreibung fehlt noch. Bitte das Skript supabase/migrations/002_beschreibung.sql im Supabase SQL Editor ausführen."
+        error.message.includes("vorschlag") || error.message.includes("status")
+          ? "Die Datenbank kennt die neuen Spalten noch nicht. Bitte das Skript supabase/migrations/003_vorschlag_status.sql im Supabase SQL Editor ausführen."
           : error.message
       );
       return;
@@ -158,7 +211,9 @@ function ArtikelDialog({
 
         <div className="flex-1 space-y-4 overflow-y-auto px-6 py-5">
           <div>
-            <label className="dl-label text-steel-600" htmlFor="a-name">Artikelname</label>
+            <label className="dl-label text-steel-600" htmlFor="a-name" title={HILFE.artikel}>
+              Artikelname
+            </label>
             <input
               id="a-name"
               value={name}
@@ -168,7 +223,7 @@ function ArtikelDialog({
             />
           </div>
           <div>
-            <label className="dl-label text-steel-600" htmlFor="a-beschreibung">
+            <label className="dl-label text-steel-600" htmlFor="a-beschreibung" title={HILFE.beschreibung}>
               Beschreibung (SEO Text)
             </label>
             <textarea
@@ -181,7 +236,7 @@ function ArtikelDialog({
             />
           </div>
           <div>
-            <p className="dl-label text-steel-600">Attribute</p>
+            <p className="dl-label text-steel-600" title={HILFE.attribute}>Attribute</p>
             <div className="mt-2 border-2 border-ink">
               {Object.keys(attribute).length === 0 && (
                 <p className="px-3 py-3 text-[13px] text-steel-500">
@@ -193,7 +248,9 @@ function ArtikelDialog({
                   key={k}
                   className="grid grid-cols-1 gap-1 border-b border-steel-300 px-3 py-2 last:border-b-0 sm:grid-cols-[220px_1fr] sm:items-center sm:gap-3"
                 >
-                  <span className="truncate text-[13px] font-semibold">{k}</span>
+                  <span className="truncate text-[13px] font-semibold" title={HILFE.attributHerkunft}>
+                    {k}
+                  </span>
                   <input
                     value={attribute[k]}
                     onChange={(e) => setAttribute({ ...attribute, [k]: e.target.value })}
@@ -220,7 +277,7 @@ function ArtikelDialog({
         <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-ink px-6 py-4">
           <Button variant="outline" onClick={anreichern} disabled={busy !== null}>
             <Sparkles size={14} strokeWidth={2.5} />
-            {busy === "ki" ? "KI arbeitet …" : "Mit KI anreichern"}
+            {busy === "ki" ? "KI arbeitet …" : "Neu anreichern"}
           </Button>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={onClose} disabled={busy !== null}>
@@ -261,6 +318,7 @@ function ImportDialog({
         setFehler("Die Datei konnte nicht gelesen werden. Erwartet wird eine CSV Datei mit Kopfzeile und mindestens einer Datenzeile.");
         return;
       }
+      parsed.headers = parsed.headers.map(umlautify);
       setCsv(parsed);
       setMapping(guessMapping(parsed.headers));
     });
@@ -424,15 +482,16 @@ function ImportDialog({
   );
 }
 
-/* ── CSV Export: schließt die Kette Import → Anreichern → Publizieren ── */
+/* ── CSV Export ── */
 function exportCsv(artikel: Artikel[], alleKeys: string[]) {
   const esc = (v: string) => `"${(v ?? "").replace(/"/g, '""')}"`;
-  const header = ["sku", "name", "beschreibung", ...alleKeys];
+  const header = ["sku", "name", "beschreibung", "status", ...alleKeys];
   const zeilen = artikel.map((a) =>
     [
       esc(a.sku),
       esc(a.name ?? ""),
       esc(a.beschreibung ?? ""),
+      esc(a.vorschlag ? "vorschlag" : a.status),
       ...alleKeys.map((k) => esc(a.attribute[k] ?? "")),
     ].join(";")
   );
@@ -456,12 +515,15 @@ export default function AppPage() {
   const [importOffen, setImportOffen] = useState(false);
   const [aktiverArtikel, setAktiverArtikel] = useState<Artikel | null>(null);
   const [meldung, setMeldung] = useState<string | null>(null);
+  const [lauf, setLauf] = useState<{ fertig: number; gesamt: number } | null>(null);
+  const [freigabeLauf, setFreigabeLauf] = useState(false);
+  const abbruch = useRef(false);
 
   const laden = useCallback(async () => {
     if (!supabase) return;
     const { data, error } = await supabase
       .from("artikel")
-      .select("id, sku, name, beschreibung, attribute, created_at")
+      .select("id, sku, name, beschreibung, attribute, vorschlag, status, created_at")
       .order("created_at", { ascending: false })
       .limit(1000);
     if (error) {
@@ -469,8 +531,10 @@ export default function AppPage() {
         error.code === "42P01"
           ? "Die Datenbanktabelle fehlt noch. Bitte einmalig das Skript supabase/migrations/001_artikel.sql im Supabase SQL Editor ausführen (Anleitung im README)."
           : error.message.includes("beschreibung")
-            ? "Die Spalte beschreibung fehlt noch. Bitte einmalig das Skript supabase/migrations/002_beschreibung.sql im Supabase SQL Editor ausführen."
-            : error.message
+            ? "Die Spalte beschreibung fehlt noch. Bitte einmalig das Skript supabase/migrations/002_beschreibung.sql ausführen."
+            : error.message.includes("vorschlag") || error.message.includes("status")
+              ? "Die Spalten für KI Vorschläge fehlen noch. Bitte einmalig das Skript supabase/migrations/003_vorschlag_status.sql im Supabase SQL Editor ausführen."
+              : error.message
       );
     } else {
       setLadeFehler(null);
@@ -499,6 +563,107 @@ export default function AppPage() {
     for (const a of artikel) Object.keys(a.attribute ?? {}).forEach((k) => s.add(k));
     return [...s];
   }, [artikel]);
+
+  const offeneVorschlaege = artikel.filter((a) => a.vorschlag).length;
+  const anzureichern = artikel.filter((a) => !a.vorschlag && !a.beschreibung?.trim()).length;
+
+  /* Alle Artikel ohne SEO Text anreichern, Ergebnisse als Vorschläge speichern. */
+  async function alleAnreichern() {
+    if (!supabase) return;
+    const ziel = artikel.filter((a) => !a.vorschlag && !a.beschreibung?.trim());
+    if (ziel.length === 0) return;
+    abbruch.current = false;
+    setLauf({ fertig: 0, gesamt: ziel.length });
+    setMeldung(null);
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) {
+      setLauf(null);
+      setMeldung("Sitzung abgelaufen, bitte neu anmelden.");
+      return;
+    }
+    let fertig = 0;
+    let fehler = 0;
+    const warteschlange = [...ziel];
+    const arbeiter = Array.from({ length: 3 }, async () => {
+      while (warteschlange.length > 0 && !abbruch.current) {
+        const a = warteschlange.shift()!;
+        try {
+          const res = await fetch("/api/enrich", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              sku: a.sku,
+              name: a.name,
+              beschreibung: a.beschreibung,
+              attribute: a.attribute,
+              katalogKeys: alleKeys,
+            }),
+          });
+          const json = await res.json();
+          if (!res.ok) throw new Error(json.fehler ?? `Fehler ${res.status}`);
+          const vorschlag: Vorschlag = {
+            name: json.name ?? "",
+            beschreibung: json.beschreibung ?? "",
+            attribute: json.attribute ?? {},
+            hinweis: json.hinweis ?? "",
+          };
+          const { error } = await supabase
+            .from("artikel")
+            .update({ vorschlag, status: "vorschlag" })
+            .eq("id", a.id);
+          if (error) throw new Error(error.message);
+        } catch {
+          fehler++;
+          if (fehler >= 3 && fertig === 0) abbruch.current = true;
+        }
+        fertig++;
+        setLauf({ fertig, gesamt: ziel.length });
+      }
+    });
+    await Promise.all(arbeiter);
+    setLauf(null);
+    setMeldung(
+      fehler === 0
+        ? `${ziel.length - fehler} Artikel angereichert. Die Vorschläge warten auf Ihre Freigabe.`
+        : `${ziel.length - fehler} Artikel angereichert, ${fehler} fehlgeschlagen. ${abbruch.current ? "Lauf abgebrochen — prüfen Sie, ob der KI Schlüssel hinterlegt ist." : ""}`
+    );
+    laden();
+  }
+
+  /* Alle offenen Vorschläge auf einmal übernehmen. */
+  async function alleFreigeben() {
+    if (!supabase) return;
+    const ziel = artikel.filter((a) => a.vorschlag);
+    if (ziel.length === 0) return;
+    setFreigabeLauf(true);
+    let fehler = 0;
+    for (const a of ziel) {
+      const angewendet = vorschlagAnwenden(a);
+      const { error } = await supabase
+        .from("artikel")
+        .update({
+          name: angewendet.name,
+          beschreibung: angewendet.beschreibung,
+          attribute: angewendet.attribute,
+          vorschlag: null,
+          status: "freigegeben",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", a.id);
+      if (error) fehler++;
+    }
+    setFreigabeLauf(false);
+    setMeldung(
+      fehler === 0
+        ? `${ziel.length} Artikel freigegeben.`
+        : `${ziel.length - fehler} Artikel freigegeben, ${fehler} fehlgeschlagen.`
+    );
+    laden();
+  }
 
   if (!checked) {
     return (
@@ -537,21 +702,58 @@ export default function AppPage() {
             <Tag tone="signal">Vorabversion</Tag>
           </div>
           <div className="flex flex-wrap gap-3">
+            {anzureichern > 0 && !lauf && (
+              <Button
+                variant="outline"
+                onClick={alleAnreichern}
+                title="Erstellt KI Vorschläge für alle Artikel ohne SEO Text. Nichts wird ohne Ihre Freigabe übernommen."
+              >
+                <Sparkles size={14} strokeWidth={2.5} /> Alle anreichern ({anzureichern})
+              </Button>
+            )}
+            {offeneVorschlaege > 0 && (
+              <Button
+                onClick={alleFreigeben}
+                disabled={freigabeLauf || lauf !== null}
+                title="Übernimmt alle offenen KI Vorschläge auf einmal in die Artikel."
+              >
+                <CheckCheck size={14} strokeWidth={2.5} />
+                {freigabeLauf ? "Gibt frei …" : `Alle freigeben (${offeneVorschlaege})`}
+              </Button>
+            )}
             {artikel.length > 0 && (
-              <Button variant="outline" onClick={() => exportCsv(artikel, alleKeys)}>
+              <Button
+                variant="outline"
+                onClick={() => exportCsv(artikel, alleKeys)}
+                title="Lädt den kompletten Katalog als CSV Datei herunter, inklusive SEO Texten und Status."
+              >
                 <Download size={14} strokeWidth={2.5} /> CSV exportieren
               </Button>
             )}
-            <Button onClick={() => setImportOffen(true)}>
+            <Button onClick={() => setImportOffen(true)} variant={artikel.length > 0 ? "outline" : "primary"}>
               <Upload size={14} strokeWidth={2.5} /> CSV importieren
             </Button>
           </div>
         </div>
 
-        {meldung && (
-          <p className="mt-4 border-2 border-ink bg-paper px-3 py-2 text-[13px]">
-            {meldung}
-          </p>
+        {lauf && (
+          <div className="mt-4 border-2 border-ink bg-paper px-4 py-3">
+            <div className="flex items-center justify-between text-[13px]">
+              <span className="font-semibold">KI Anreicherung läuft …</span>
+              <span className="font-mono text-[12px] text-steel-600">
+                {lauf.fertig} / {lauf.gesamt}
+              </span>
+            </div>
+            <div className="mt-2 h-2 bg-steel-200">
+              <div
+                className="h-full bg-signal"
+                style={{ width: `${Math.round((lauf.fertig / lauf.gesamt) * 100)}%` }}
+              />
+            </div>
+          </div>
+        )}
+        {meldung && !lauf && (
+          <p className="mt-4 border-2 border-ink bg-paper px-3 py-2 text-[13px]">{meldung}</p>
         )}
         {ladeFehler && (
           <p className="mt-4 border-2 border-signal bg-signal-tint px-3 py-2 text-[13px] text-signal-deep">
@@ -574,34 +776,32 @@ export default function AppPage() {
           </div>
         ) : artikel.length > 0 ? (
           <div className="mt-8 overflow-x-auto border-2 border-ink bg-paper">
-            <div className="grid min-w-[680px] grid-cols-[140px_1fr_150px_110px_90px] gap-4 border-b-2 border-ink px-4 py-2.5">
-              {["SKU", "Artikel", "Vollständigkeit", "Attribute", "SEO Text"].map((h) => (
-                <span key={h} className="dl-label text-steel-500">{h}</span>
-              ))}
+            <div className="grid min-w-[720px] grid-cols-[130px_1fr_150px_100px_130px] gap-4 border-b-2 border-ink px-4 py-2.5">
+              <span className="dl-label text-steel-500" title={HILFE.sku}>SKU</span>
+              <span className="dl-label text-steel-500" title={HILFE.artikel}>Artikel</span>
+              <span className="dl-label text-steel-500" title={HILFE.vollstaendigkeit}>Vollständigkeit</span>
+              <span className="dl-label text-steel-500" title={HILFE.attribute}>Attribute</span>
+              <span className="dl-label text-steel-500" title={HILFE.status}>Status</span>
             </div>
             {artikel.map((a) => (
               <button
                 key={a.id}
                 onClick={() => setAktiverArtikel(a)}
-                className="grid w-full min-w-[680px] grid-cols-[140px_1fr_150px_110px_90px] items-center gap-4 border-b border-steel-300 px-4 py-3 text-left transition-colors duration-150 last:border-b-0 hover:bg-steel-100"
+                className="grid w-full min-w-[720px] grid-cols-[130px_1fr_150px_100px_130px] items-center gap-4 border-b border-steel-300 px-4 py-3 text-left transition-colors duration-150 last:border-b-0 hover:bg-steel-100"
               >
                 <span className="truncate font-mono text-[12px] text-steel-600">{a.sku}</span>
                 <span className="truncate text-[14px] font-semibold">
                   {a.name || <span className="text-steel-400">ohne Namen</span>}
                 </span>
                 <Vollstaendigkeit artikel={a} alleKeys={alleKeys} />
-                <span className="font-mono text-[12px] text-steel-600">
+                <span className="font-mono text-[12px] text-steel-600" title={HILFE.attribute}>
                   {Object.values(a.attribute ?? {}).filter((v) => (v ?? "").toString().trim() !== "").length} / {alleKeys.length}
                 </span>
-                {a.beschreibung?.trim() ? (
-                  <Tag tone="success">Vorhanden</Tag>
-                ) : (
-                  <Tag tone="neutral">Fehlt</Tag>
-                )}
+                <span title={HILFE.status}>{statusTag(a)}</span>
               </button>
             ))}
             <p className="px-4 py-3 font-mono text-[12px] text-steel-500">
-              {artikel.length.toLocaleString("de-DE")} Artikel · Zum Bearbeiten und Anreichern Artikel anklicken
+              {artikel.length.toLocaleString("de-DE")} Artikel · Zum Prüfen und Freigeben Artikel anklicken
             </p>
           </div>
         ) : null}
@@ -624,7 +824,7 @@ export default function AppPage() {
           onClose={() => setAktiverArtikel(null)}
           onSaved={() => {
             setAktiverArtikel(null);
-            setMeldung(`Artikel ${aktiverArtikel.sku} gespeichert.`);
+            setMeldung(`Artikel ${aktiverArtikel.sku} freigegeben.`);
             laden();
           }}
         />

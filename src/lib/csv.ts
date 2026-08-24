@@ -70,6 +70,18 @@ export function parseCsv(text: string): ParsedCsv {
   return { headers, rows, delimiter };
 }
 
+/* Stellt Umlaute in Spaltennamen wieder her (Auftraege -> Aufträge).
+   Vorsichtig: ue nach a, e, o, q bleibt unangetastet (Quelle, neue, baue). */
+export function umlautify(text: string): string {
+  return text
+    .replace(/(?<![AaEeOoQq])ue/g, "ü")
+    .replace(/(?<![AaEeOoQq])Ue/g, "Ü")
+    .replace(/ae/g, "ä")
+    .replace(/Ae/g, "Ä")
+    .replace(/oe/g, "ö")
+    .replace(/Oe/g, "Ö");
+}
+
 /* Automatische Zuordnung: rät SKU und Namensspalte aus üblichen Bezeichnungen. */
 export function guessMapping(headers: string[]): Record<number, "sku" | "name" | "attribut"> {
   const mapping: Record<number, "sku" | "name" | "attribut"> = {};

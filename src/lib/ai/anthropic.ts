@@ -20,7 +20,7 @@ const EnrichSchema = z.object({
 
 export function anthropicProvider(): AiProvider {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = process.env.AI_MODEL || "claude-opus-5";
+  const model = process.env.AI_MODEL || "claude-haiku-4-5";
   return {
     id: `anthropic:${model}`,
     async enrich(input: EnrichInput): Promise<EnrichResult> {
