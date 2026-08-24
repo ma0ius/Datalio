@@ -289,7 +289,9 @@ export default function AppPage() {
     <main className="min-h-screen bg-ground">
       <header className="border-b-2 border-ink bg-ground">
         <div className="mx-auto flex h-16 max-w-[1240px] items-center justify-between px-5 md:px-10">
-          <Logo size={22} />
+          <a href="/" aria-label="Zur Website">
+            <Logo size={22} />
+          </a>
           <div className="flex items-center gap-4">
             <span className="hidden font-mono text-[12px] text-steel-600 md:inline">{email}</span>
             <button
