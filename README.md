@@ -1,35 +1,40 @@
-# Datalio Website
+# Datalio Website und App
 
-Marketingseite für Datalio (PIM für den Mittelstand), aufgebaut nach dem Vorbild von productbay.ai im Datalio Design Theme (siehe `../Datalio Design Theme`).
+Marketingseite und App Grundgerüst für Datalio (PIM für den Mittelstand), Design nach dem Datalio Design Theme (siehe `../Datalio Design Theme`).
 
 ## Stack
 
-- Vite + React 19 + TypeScript
-- Tailwind CSS 4 (Tokens aus dem Datalio Design Theme in `src/index.css`)
-- Framer Motion für alle Animationen
-- Lucide für Icons (Vorgabe des Designsystems)
-
-Die Animationsmuster von Magic UI, React Bits und Aceternity (Marquee, Number Ticker, Grid Pattern, animierter Datenfluss) sind als eigene Komponenten unter `src/components/fx` nachgebaut, damit sie die Theme Regeln einhalten: Radius 0, flache Flächen, keine Verläufe, ein Rotakzent pro Fläche.
+- Next.js 15 (App Router, statisch generiert) + React 19 + TypeScript
+- Tailwind CSS 4 (Tokens aus dem Designsystem in `src/index.css`)
+- Framer Motion für Animationen, Lucide für Icons
+- Supabase für Login und später Datenhaltung der App
 
 ## Befehle
 
 ```
-npm install          Abhängigkeiten installieren
-npm run dev          Dev Server (Standardport 5173)
-npm run build        Produktivbuild nach dist/
-npx vite build --mode singlefile   Build als einzelne HTML Datei
-node scripts/make-artifact.mjs     dist/index.html in ein Claude Artifact Fragment umwandeln
+npm install     Abhängigkeiten installieren
+npm run dev     Dev Server (http://localhost:3000)
+npm run build   Produktivbuild
 ```
+
+## Supabase einrichten
+
+1. `.env.local.example` nach `.env.local` kopieren
+2. Beide Werte aus Supabase eintragen (Projekt → Connect → Next.js App Router)
+3. Dieselben zwei Variablen im Vercel Projekt unter Settings → Environment Variables anlegen
+
+Ohne diese Werte läuft die Website normal; nur `/login` und `/app` zeigen einen Hinweis.
 
 ## Struktur
 
-- `src/App.tsx` — Reihenfolge der Sektionen
-- `src/components/sections/` — Nav, Hero, StatStrip, Integrations, Problem, LlmSeo, Solutions, Platform, Workflow, DemoCta, Faq, Closing, Footer
-- `src/components/ui/` — Logo (Wortmarke mit Ring), Button, Tag
-- `src/components/fx/` — Reveal, NumberTicker, Marquee, GridPattern
+- `src/app/` — Seiten: Startseite, `ratgeber/*` (SEO Ratgeber), `impressum`, `datenschutz`, `login`, `app` (geschützter Bereich, Vorabversion)
+- `src/components/sections/` — Sektionen der Startseite
+- `src/components/ui/`, `src/components/fx/` — Basisbausteine und Animationen
+- `src/lib/supabase.ts` — Supabase Browser Client (mit Guard, falls Env fehlt)
 
 ## Offene Platzhalter
 
-- E-Mail Adresse `kontakt@datalio.de` (Domain noch nicht gesichert)
-- Login Link und Footer Links ohne Ziel
-- Kennzahlen im Hero und StatStrip sind Beispielwerte
+- Impressum und Datenschutz: Angaben in eckigen Klammern vor Livegang füllen
+- `kontakt@datalio.de`: Postfach bei IONOS anlegen oder Weiterleitung einrichten
+- Demo Button: auf Microsoft Bookings Link umstellen, sobald die Buchungsseite existiert
+- Kennzahlen auf der Startseite sind Beispielwerte
