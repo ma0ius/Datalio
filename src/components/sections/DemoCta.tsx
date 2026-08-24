@@ -33,11 +33,16 @@ export function DemoCta() {
         <Reveal delay={0.15}>
           <div className="border-2 border-ground p-8">
             <p className="text-[16px] leading-[1.6]">
-              Termin direkt vereinbaren oder eine Nachricht schreiben. Sie
-              sprechen mit dem Gründer, nicht mit dem Vertrieb.
+              Termin direkt buchen oder eine Nachricht schreiben. Sie sprechen
+              mit dem Gründer, nicht mit dem Vertrieb.
             </p>
-            <ButtonLink href="mailto:kontakt@datalio.de" className="mt-6 w-full justify-center">
-              Demo vereinbaren <ArrowRight size={14} strokeWidth={2.5} />
+            <ButtonLink
+              href="https://cal.com/datalio/demo"
+              target="_blank"
+              rel="noopener"
+              className="mt-6 w-full justify-center"
+            >
+              Termin buchen <ArrowRight size={14} strokeWidth={2.5} />
             </ButtonLink>
             <p className="mt-4 text-center font-mono text-[12px] text-steel-500">
               oder direkt an kontakt@datalio.de
