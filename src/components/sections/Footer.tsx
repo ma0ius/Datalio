@@ -27,6 +27,7 @@ const columns = [
       { label: "Kontakt", href: "mailto:kontakt@datalio.de" },
       { label: "Impressum", href: "/impressum" },
       { label: "Datenschutz", href: "/datenschutz" },
+      { label: "AGB", href: "/agb" },
     ],
   },
 ];

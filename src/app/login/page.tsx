@@ -13,28 +13,50 @@ export default function LoginPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [password2, setPassword2] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) return;
+    if (mode === "register" && password !== password2) {
+      setMessage("Die beiden Passwörter stimmen nicht überein.");
+      return;
+    }
     setBusy(true);
     setMessage(null);
-    const { error } =
+    const { data, error } =
       mode === "login"
         ? await supabase.auth.signInWithPassword({ email, password })
-        : await supabase.auth.signUp({ email, password });
+        : await supabase.auth.signUp({
+            email,
+            password,
+            options: { emailRedirectTo: `${window.location.origin}/login` },
+          });
     setBusy(false);
     if (error) {
-      setMessage(error.message);
+      setMessage(
+        error.message === "Invalid login credentials"
+          ? "E-Mail oder Passwort ist falsch, oder die E-Mail wurde noch nicht bestätigt."
+          : error.message
+      );
       return;
     }
     if (mode === "register") {
+      // Bereits registrierte Adressen liefern bei Supabase einen leeren
+      // identities Array statt eines Fehlers.
+      if (data.user && data.user.identities?.length === 0) {
+        setMessage("Für diese E-Mail Adresse existiert bereits ein Konto. Bitte melden Sie sich an.");
+        setMode("login");
+        return;
+      }
       setMessage(
-        "Konto angelegt. Bitte bestätigen Sie die E-Mail, die wir Ihnen geschickt haben, und melden Sie sich danach an."
+        "Konto angelegt. Wir haben Ihnen eine Bestätigungsmail geschickt. Bitte klicken Sie auf den Link darin, erst danach ist die Anmeldung möglich."
       );
       setMode("login");
+      setPassword("");
+      setPassword2("");
       return;
     }
     router.push("/app");
@@ -77,11 +99,37 @@ export default function LoginPage() {
                 type="password"
                 required
                 minLength={8}
+                autoComplete={mode === "register" ? "new-password" : "current-password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="mt-2 w-full border-2 border-ink bg-paper px-3 py-2.5 text-[14px]"
               />
+              {mode === "register" && (
+                <p className="mt-1.5 text-[12px] text-steel-500">Mindestens 8 Zeichen.</p>
+              )}
             </div>
+            {mode === "register" && (
+              <div>
+                <label htmlFor="password2" className="dl-label text-steel-600">
+                  Passwort wiederholen
+                </label>
+                <input
+                  id="password2"
+                  type="password"
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                  value={password2}
+                  onChange={(e) => setPassword2(e.target.value)}
+                  className="mt-2 w-full border-2 border-ink bg-paper px-3 py-2.5 text-[14px]"
+                />
+                {password2.length > 0 && password !== password2 && (
+                  <p className="mt-1.5 text-[12px] text-signal-strong">
+                    Die Passwörter stimmen noch nicht überein.
+                  </p>
+                )}
+              </div>
+            )}
             {message && (
               <p className="border-2 border-steel-300 bg-steel-100 px-3 py-2 text-[13px] leading-[1.5] text-steel-700">
                 {message}

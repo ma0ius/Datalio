@@ -32,7 +32,13 @@ export function Nav() {
             </a>
           ))}
         </nav>
-        <div className="hidden items-center gap-3 lg:flex">
+        <div className="hidden items-center gap-5 lg:flex">
+          <a
+            href="/login"
+            className="dl-label text-steel-700 transition-colors duration-150 hover:text-ink"
+          >
+            Login
+          </a>
           <ButtonLink href="/#demo">Demo vereinbaren</ButtonLink>
         </div>
         <button
@@ -55,6 +61,13 @@ export function Nav() {
               {i.label}
             </a>
           ))}
+          <a
+            href="/login"
+            onClick={() => setOpen(false)}
+            className="dl-label block py-3 text-steel-700"
+          >
+            Login
+          </a>
           <ButtonLink href="/#demo" className="mt-3" onClick={() => setOpen(false)}>
             Demo vereinbaren
           </ButtonLink>

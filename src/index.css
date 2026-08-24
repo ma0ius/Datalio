@@ -1,4 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap");
 @import "tailwindcss";
 
 /* ── Datalio design tokens ─────────────────────────────
@@ -28,8 +27,8 @@
   --color-success: #2f6b3a;
   --color-warning: #9a6a10;
 
-  --font-sans: "Archivo", "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-sans: var(--font-archivo), "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
   --radius: 0px;
 }
